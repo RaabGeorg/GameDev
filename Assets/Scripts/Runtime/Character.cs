@@ -31,6 +31,10 @@ public class Character : MonoBehaviour
     [SerializeField] private float jumpSpeed;
     [SerializeField] private float platformRayDistance;
     [SerializeField] private Transform cameraTransform;
+    
+    [Header("Character Stats")]
+    [SerializeField] private float maxHealth = 100f;
+    private float currentHealth;
 
     private Vector3 characterMovement;
     private Vector3 jumpVelocity;
@@ -55,6 +59,9 @@ public class Character : MonoBehaviour
         this.musicSource.outputAudioMixerGroup = sfxMixerGroup; 
     
         this.musicSource.Play();
+        
+        this.currentHealth = this.maxHealth;
+        
     }
 
     void HandleJumping()
@@ -181,6 +188,22 @@ public class Character : MonoBehaviour
             if (this.runningSoundSource.isPlaying)
                 this.runningSoundSource.Stop();
         }
+    }
+    
+    public void InflictDamage(float amount) {
+        this.currentHealth -= amount ;
+        this.currentHealth = Mathf .Clamp( this.currentHealth, 0.0f, this.maxHealth);
+    }
+    
+
+    public float GetCurrentHealth()
+    {
+        return currentHealth;
+    }
+    
+    public float GetMaxHealth()
+    {
+        return maxHealth;
     }
         
 }

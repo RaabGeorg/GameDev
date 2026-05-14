@@ -1,6 +1,6 @@
 using TMPro;
 using UnityEngine;
-
+using UnityEngine.UI;
 
 
 public class UIManager : MonoBehaviour {
@@ -9,6 +9,10 @@ public class UIManager : MonoBehaviour {
     public static UIManager Instance => instance;
 
     private PlayerStatistics statistics;
+    
+    [ SerializeField ] private Character character;
+    [ SerializeField ] private Image healthBar;
+
 
     private void Awake()
     {
@@ -30,6 +34,11 @@ public class UIManager : MonoBehaviour {
     private class PlayerStatistics
     {
         public int coinCounter = 0;
+    }
+    
+    private void Update () {
+        float percent = this.character.GetCurrentHealth() / this.character.GetMaxHealth();
+        this.healthBar.fillAmount = percent;
     }
     
 }
