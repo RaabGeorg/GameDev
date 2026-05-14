@@ -16,6 +16,8 @@ public class Coin : MonoBehaviour
     {
         if (!other.CompareTag("Player"))
             return;
+        
+        UIManager.Instance.CollectCoin();
 
         if (collectSound != null)
         {
