@@ -14,6 +14,8 @@ public class SawController : MonoBehaviour
 
     [Header("Particles")]
     [SerializeField] private ParticleSystem sparklingParticles;
+    
+    [SerializeField] private float damagePerSecond = 10f;
 
     private AudioSource audioSource;
 
@@ -80,5 +82,17 @@ public class SawController : MonoBehaviour
     private void Update()
     {
         transform.Rotate(spinAxis, spinSpeed * Time.deltaTime);
+    }
+    
+    private void OnTriggerStay ( Collider other) {
+        if (other.CompareTag("Player")) {
+            Debug.Log("Saw Hitting Player");
+            var character = other.GetComponentInChildren<Character>();
+            character.InflictDamage( this.damagePerSecond * Time.fixedDeltaTime);
+        }
+        else
+        {
+            Debug.Log("Saw hit some bullshit");
+        }
     }
 }

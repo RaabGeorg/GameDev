@@ -35,11 +35,13 @@ public class Character : MonoBehaviour
     [Header("Character Stats")]
     [SerializeField] private float maxHealth = 100f;
     private float currentHealth;
+    [SerializeField] private float deathYThreshold = -10.0f;
 
     private Vector3 characterMovement;
     private Vector3 jumpVelocity;
     private Vector3 platformVelocity;
     private Vector3 characterGravity;
+    private Vector3 spawnPosition;
 
     private void Start()
     {
@@ -60,6 +62,9 @@ public class Character : MonoBehaviour
     
         this.musicSource.Play();
         
+        this.currentHealth = this.maxHealth;
+        
+        this.spawnPosition = this.transform.position;
         this.currentHealth = this.maxHealth;
         
     }
@@ -134,65 +139,87 @@ public class Character : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
+   private void FixedUpdate()
+{
+    
+    if (this.currentHealth <= 0 || this.transform.position.y < -10f || UIManager.Instance.IsGameOver)
     {
-        this.HandleJumping();
-        this.HandlePlatforms();
+        if (this.currentHealth > 0 && this.transform.position.y < -10f) 
+            this.InflictDamage(this.maxHealth);
 
-        var inputMovement = this.moveAction.ReadValue<Vector2>();
-
-        var inputRightDirection = this.cameraTransform.right;
-        var inputForwardDirection = this.cameraTransform.forward;
-
-        inputRightDirection.y = 0f;
-        inputForwardDirection.y = 0f;
-        inputRightDirection.Normalize();
-        inputForwardDirection.Normalize();
-
-        //Since we do not use the physics system, we have to simulate gravity ourselves
-        if (this.controller.isGrounded) {
-            this.characterGravity.y = 0.0f;
-        }
-
-        this.characterGravity.y += this.gravity * Time.fixedDeltaTime;
-        this.characterMovement += this.characterGravity * Time.fixedDeltaTime;
-        this.characterMovement += this.jumpVelocity * Time.fixedDeltaTime;
-        this.characterMovement += inputRightDirection * inputMovement.x * this.characterSpeed * Time.fixedDeltaTime;
-        this.characterMovement += inputForwardDirection * inputMovement.y * this.characterSpeed * Time.fixedDeltaTime;
-
-        this.characterMovement *= (1.0f - this.dampening);
-
-        Vector3 characterForward = this.characterMovement;
-        characterForward.y = 0.0f;
-
-        if(characterForward.sqrMagnitude > 0.0f && characterForward != Vector3.zero) {
-            this.transform.forward = characterForward.normalized;
-        }
-
-        this.controller.Move(this.characterMovement + this.platformVelocity * Time.fixedDeltaTime);
-        
-        this.SetAnimationState(inputMovement);
-
-        if (this.controller.isGrounded && inputMovement != Vector2.zero && !this.isJumping)
-        {
-            if (!this.runningSoundSource.isPlaying)
-            {
-                this.runningSoundSource.clip = runningSound;
-                this.runningSoundSource.volume = runningVolume;
-                this.runningSoundSource.pitch = 0.3f;
-                this.runningSoundSource.Play();
-            }
-        }
-        else
-        {
-            if (this.runningSoundSource.isPlaying)
-                this.runningSoundSource.Stop();
-        }
+        if (this.runningSoundSource.isPlaying) this.runningSoundSource.Stop();
+        this.SetAnimationState(Vector2.zero);
+        return; 
     }
     
+    bool isDead = this.currentHealth <= 0 || this.transform.position.y < -10.0f;
+
+    if (isDead)
+    {
+        if (this.currentHealth > 0) this.InflictDamage(this.maxHealth);
+        
+        if (this.runningSoundSource.isPlaying) this.runningSoundSource.Stop();
+        this.SetAnimationState(Vector2.zero);
+        
+        return; 
+    }
+
+    this.HandleJumping();
+    this.HandlePlatforms();
+
+    var inputMovement = this.moveAction.ReadValue<Vector2>();
+
+    var inputRightDirection = this.cameraTransform.right;
+    var inputForwardDirection = this.cameraTransform.forward;
+
+    inputRightDirection.y = 0f;
+    inputForwardDirection.y = 0f;
+    inputRightDirection.Normalize();
+    inputForwardDirection.Normalize();
+
+    if (this.controller.isGrounded) {
+        this.characterGravity.y = 0.0f;
+    }
+
+    this.characterGravity.y += this.gravity * Time.fixedDeltaTime;
+    this.characterMovement += this.characterGravity * Time.fixedDeltaTime;
+    this.characterMovement += this.jumpVelocity * Time.fixedDeltaTime;
+    this.characterMovement += inputRightDirection * inputMovement.x * this.characterSpeed * Time.fixedDeltaTime;
+    this.characterMovement += inputForwardDirection * inputMovement.y * this.characterSpeed * Time.fixedDeltaTime;
+
+    this.characterMovement *= (1.0f - this.dampening);
+
+    Vector3 characterForward = this.characterMovement;
+    characterForward.y = 0.0f;
+
+    if(characterForward.sqrMagnitude > 0.0f && characterForward != Vector3.zero) {
+        this.transform.forward = characterForward.normalized;
+    }
+
+    this.controller.Move(this.characterMovement + this.platformVelocity * Time.fixedDeltaTime);
+    
+    this.SetAnimationState(inputMovement);
+
+    if (this.controller.isGrounded && inputMovement != Vector2.zero && !this.isJumping)
+    {
+        if (!this.runningSoundSource.isPlaying)
+        {
+            this.runningSoundSource.clip = runningSound;
+            this.runningSoundSource.volume = runningVolume;
+            this.runningSoundSource.pitch = 0.3f;
+            this.runningSoundSource.Play();
+        }
+    }
+    else
+    {
+        if (this.runningSoundSource.isPlaying)
+            this.runningSoundSource.Stop();
+    }
+}
+    
     public void InflictDamage(float amount) {
-        this.currentHealth -= amount ;
-        this.currentHealth = Mathf .Clamp( this.currentHealth, 0.0f, this.maxHealth);
+        this.currentHealth -= amount;
+        this.currentHealth = Mathf.Clamp(this.currentHealth, 0.0f, this.maxHealth);
     }
     
 
@@ -204,6 +231,14 @@ public class Character : MonoBehaviour
     public float GetMaxHealth()
     {
         return maxHealth;
+    }
+    
+    public void Respawn() {
+        this.currentHealth = this.maxHealth;
+        this.controller.enabled = false;
+        this.transform.position = this.spawnPosition;
+        this.controller.enabled = true;
+        this.characterMovement = Vector3.zero;
     }
         
 }

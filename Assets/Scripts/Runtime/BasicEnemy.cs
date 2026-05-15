@@ -12,12 +12,20 @@ public class BasicEnemy : MonoBehaviour
     private Transform player;
     private bool isChasing = false;
     private bool isDead = false;
+    private bool isStoppedByCombat = false;
+
+
+
+    public void SetMovementStopped(bool stop)
+    {
+        this.isStoppedByCombat = stop;
+    }
 
     void Update()
     {
         if (isDead) return;
 
-        if (isChasing && player != null)
+        if (isChasing && player != null && !isStoppedByCombat)
         {
             Vector3 direction = (player.position - transform.position).normalized;
             direction.y = 0;
@@ -72,5 +80,9 @@ public class BasicEnemy : MonoBehaviour
             yield return null;
         }
         Destroy(gameObject, 0.2f);
+    }
+    
+    public bool IsEnemyDead(){
+        return isDead;
     }
 }

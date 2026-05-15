@@ -8,9 +8,8 @@ public class RespawnTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        var controller = other.gameObject.GetComponent<CharacterController>();
-        controller.enabled = false;
-        controller.transform.position = this.respawnPoint.transform.position;
-        controller.enabled = true;
+        if (other.TryGetComponent<Character>(out var character)) {
+            character.InflictDamage(9999f); //KILLEM
+        }
     }
 }
